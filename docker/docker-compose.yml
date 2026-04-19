@@ -1,0 +1,33 @@
+services:
+  fraud-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - DATABASE_URL=sqlite:////app/data/fraud.db
+    volumes:
+      - ../models:/app/models
+      - ../data:/app/data
+      - fraud_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  dashboard:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ../dashboard:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    depends_on:
+      - fraud-api
+
+volumes:
+  fraud_data:

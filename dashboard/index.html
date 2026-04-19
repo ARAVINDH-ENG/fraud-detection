@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudShield Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --c-bg:       #0f0f13;
+  --c-panel:    #16161d;
+  --c-card:     #1c1c26;
+  --c-hover:    #22222e;
+  --c-border:   #2a2a38;
+  --c-border2:  #3a3a50;
+  --c-text:     #e2e2ee;
+  --c-muted:    #6a6a88;
+  --c-muted2:   #9a9ab8;
+  --c-green:    #22d3a0;
+  --c-green-bg: rgba(34,211,160,0.08);
+  --c-green-bd: rgba(34,211,160,0.2);
+  --c-red:      #f05070;
+  --c-red-bg:   rgba(240,80,112,0.08);
+  --c-red-bd:   rgba(240,80,112,0.2);
+  --c-yellow:   #f0b040;
+  --c-yellow-bg:rgba(240,176,64,0.08);
+  --c-yellow-bd:rgba(240,176,64,0.2);
+  --c-blue:     #6090f0;
+  --c-blue-bg:  rgba(96,144,240,0.08);
+  --c-blue-bd:  rgba(96,144,240,0.2);
+  --f-ui:   'Inter', sans-serif;
+  --f-code: 'JetBrains Mono', monospace;
+  --r: 8px;
+}
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--f-ui);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── GRID TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--c-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--c-border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SHELL ── */
+.shell { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--c-panel);
+  border-right: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+.logo-name {
+  font-family: var(--f-code);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+  letter-spacing: -0.02em;
+}
+.logo-name b { color: var(--c-green); }
+.logo-sub {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-muted);
+  margin-top: 3px;
+}
+.sidebar-nav { padding: 10px 0; flex: 1; }
+.nav-section {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-muted);
+  padding: 10px 16px 4px;
+}
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--c-muted2);
+  font-family: var(--f-ui);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.1s;
+}
+.nav-btn:hover { color: var(--c-text); background: var(--c-hover); }
+.nav-btn.on { color: var(--c-green); background: var(--c-green-bg); border-left-color: var(--c-green); }
+.nav-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--f-code);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--c-red-bg);
+  color: var(--c-red);
+  border: 1px solid var(--c-red-bd);
+}
+.sidebar-foot {
+  padding: 12px 16px;
+  border-top: 1px solid var(--c-border);
+}
+.conn-row { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+.conn-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--c-green);
+  flex-shrink: 0;
+}
+.conn-dot.off { background: var(--c-red); animation: none; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+.conn-dot { animation: pulse 2s infinite; }
+.conn-label { color: var(--c-muted2); }
+.conn-url { font-family: var(--f-code); font-size: 9px; color: var(--c-muted); margin-top: 2px; }
+
+/* ── CONTENT AREA ── */
+.content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--c-panel);
+  border-bottom: 1px solid var(--c-border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-path { font-family: var(--f-code); font-size: 11px; color: var(--c-muted); }
+.topbar-path b { color: var(--c-text); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.chip {
+  font-family: var(--f-code);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.chip-api { background: var(--c-blue-bg); color: var(--c-blue); border: 1px solid var(--c-blue-bd); }
+.chip-live { background: var(--c-green-bg); color: var(--c-green); border: 1px solid var(--c-green-bd); }
+.chip-live::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--c-green); margin-right: 5px; animation: pulse 1.5s infinite; }
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--c-card);
+  border: 1px solid var(--c-border2);
+  border-radius: 5px;
+  color: var(--c-text);
+  font-family: var(--f-ui);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.btn-sm:hover { background: var(--c-hover); border-color: var(--c-muted); }
+
+/* ── SCROLL BODY ── */
+.scroll-body { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.scroll-body::-webkit-scrollbar { width: 3px; }
+.scroll-body::-webkit-scrollbar-thumb { background: var(--c-border2); border-radius: 2px; }
+
+/* ── VIEWS ── */
+.view { display: none; padding: 24px; }
+.view.show { display: block; }
+
+/* ── PAGE HEADER ── */
+.ph { margin-bottom: 20px; }
+.ph-title { font-size: 18px; font-weight: 700; color: var(--c-text); letter-spacing: -0.02em; }
+.ph-title span { color: var(--c-green); }
+.ph-sub { font-size: 11px; color: var(--c-muted); margin-top: 3px; }
+
+/* ── ENDPOINT CHIPS ── */
+.ep-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.ep {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  font-family: var(--f-code);
+  font-size: 10px;
+}
+.ep-method { font-weight: 700; }
+.ep-method.post { color: var(--c-yellow); }
+.ep-method.get  { color: var(--c-green); }
+.ep-path { color: var(--c-muted); }
+.ep-path b { color: var(--c-text); }
+
+/* ── STAT GRID ── */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.stat-box {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  padding: 16px;
+  position: relative;
+}
+.stat-box::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: var(--r) var(--r) 0 0; }
+.stat-box.g::after { background: var(--c-green); }
+.stat-box.r::after { background: var(--c-red); }
+.stat-box.y::after { background: var(--c-yellow); }
+.stat-box.b::after { background: var(--c-blue); }
+.stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-muted); margin-bottom: 8px; }
+.stat-num { font-family: var(--f-code); font-size: 26px; font-weight: 700; line-height: 1; }
+.stat-box.g .stat-num { color: var(--c-green); }
+.stat-box.r .stat-num { color: var(--c-red); }
+.stat-box.y .stat-num { color: var(--c-yellow); }
+.stat-box.b .stat-num { color: var(--c-blue); }
+.stat-sub { font-size: 10px; color: var(--c-muted); margin-top: 5px; }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ── PANEL ── */
+.panel {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.panel-head {
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.panel-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--c-muted); font-weight: 600; }
+.panel-body { padding: 16px; }
+.panel-body-flush { }
+
+/* ── HEALTH ROWS ── */
+.h-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--c-border); font-size: 12px; }
+.h-row:last-child { border-bottom: none; }
+.h-row .k { color: var(--c-muted); }
+.h-row .v { font-weight: 500; }
+
+/* ── DIST BARS ── */
+.dist-item { margin-bottom: 12px; }
+.dist-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; color: var(--c-muted); }
+.dist-track { height: 5px; background: var(--c-hover); border-radius: 3px; overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+/* ── TICKER ── */
+.ticker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--c-green-bg);
+  border: 1px solid var(--c-green-bd);
+  border-radius: 5px;
+  font-family: var(--f-code);
+  font-size: 10px;
+  color: var(--c-green);
+  margin-bottom: 18px;
+}
+.ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--c-green); animation: pulse 1.5s infinite; }
+.ticker-right { margin-left: auto; opacity: .6; }
+
+/* ── PREDICT LAYOUT ── */
+.predict-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+
+/* ── INPUT SECTION ── */
+.input-section-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--c-muted);
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 10px;
+}
+.core-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.v-fields { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; margin-bottom: 14px; }
+.fld { display: flex; flex-direction: column; gap: 4px; }
+.fld label { font-size: 9px; text-transform: uppercase; letter-spacing: .07em; color: var(--c-muted); }
+.fld input {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 5px;
+  padding: 7px 9px;
+  color: var(--c-text);
+  font-family: var(--f-code);
+  font-size: 11px;
+  outline: none;
+  width: 100%;
+  transition: border-color .15s;
+}
+.fld input:focus { border-color: var(--c-green); }
+.fld input::placeholder { color: var(--c-muted); }
+
+/* ── BUTTONS ── */
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: var(--f-code);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all .12s;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+.btn-green { background: var(--c-green); color: #0f0f13; }
+.btn-green:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--c-text); border: 1px solid var(--c-border2); }
+.btn-outline:hover { background: var(--c-hover); }
+.btn-red-outline { background: var(--c-red-bg); color: var(--c-red); border: 1px solid var(--c-red-bd); }
+.btn-red-outline:hover { background: rgba(240,80,112,.14); }
+.btn-green-outline { background: var(--c-green-bg); color: var(--c-green); border: 1px solid var(--c-green-bd); }
+.btn-green-outline:hover { background: rgba(34,211,160,.14); }
+
+/* ── BADGE ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-family: var(--f-code);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.bg { background: var(--c-green-bg); color: var(--c-green); border: 1px solid var(--c-green-bd); }
+.br { background: var(--c-red-bg);   color: var(--c-red);   border: 1px solid var(--c-red-bd); }
+.by { background: var(--c-yellow-bg);color: var(--c-yellow);border: 1px solid var(--c-yellow-bd); }
+.bb { background: var(--c-blue-bg);  color: var(--c-blue);  border: 1px solid var(--c-blue-bd); }
+
+/* ── RESULT PLACEHOLDER ── */
+.result-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border: 1px dashed var(--c-border);
+  border-radius: var(--r);
+  color: var(--c-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── RESULT CARD ── */
+.result-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.result-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.result-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.prob-big { font-family: var(--f-code); font-size: 38px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.result-label { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--c-muted); margin-bottom: 4px; }
+.cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.cost-box { background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px; }
+.cost-lbl { font-size: 9px; color: var(--c-muted); margin-bottom: 3px; }
+.cost-val { font-family: var(--f-code); font-size: 17px; font-weight: 700; }
+.shap-list { display: flex; flex-direction: column; gap: 7px; }
+.shap-item { display: flex; align-items: center; gap: 8px; }
+.shap-name { width: 36px; font-family: var(--f-code); font-size: 10px; color: var(--c-muted); text-align: right; flex-shrink: 0; }
+.shap-bar-wrap { flex: 1; height: 4px; background: var(--c-hover); border-radius: 2px; overflow: hidden; }
+.shap-bar { height: 100%; border-radius: 2px; }
+.shap-val-text { width: 52px; font-family: var(--f-code); font-size: 10px; text-align: right; }
+.ai-block {
+  background: linear-gradient(135deg, var(--c-green-bg), var(--c-blue-bg));
+  border: 1px solid var(--c-green-bd);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--c-text);
+  position: relative;
+  margin-top: 14px;
+  word-break: break-word;
+  white-space: normal;
+}
+.ai-label {
+  position: absolute;
+  top: -7px;
+  left: 10px;
+  background: var(--c-card);
+  padding: 0 6px;
+  font-family: var(--f-code);
+  font-size: 8px;
+  letter-spacing: .1em;
+  color: var(--c-green);
+  text-transform: uppercase;
+}
+
+/* ── TABLE ── */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--c-muted); padding: 9px 14px; border-bottom: 1px solid var(--c-border); font-weight: 600; }
+.tbl td { padding: 10px 14px; border-bottom: 1px solid var(--c-border); font-size: 12px; vertical-align: top; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255,255,255,.012); }
+.tx-mono { font-family: var(--f-code); font-size: 10px; color: var(--c-muted); }
+.prob-inline { display: flex; align-items: center; gap: 6px; }
+.prob-track { width: 48px; height: 3px; background: var(--c-hover); border-radius: 2px; overflow: hidden; }
+.prob-bar-fill { height: 100%; border-radius: 2px; }
+
+/* EXPLANATION CELL — NO TRUNCATION */
+.expl-cell { font-size: 11px; line-height: 1.6; color: var(--c-muted2); word-break: break-word; white-space: normal; max-width: 380px; display: block; }
+
+/* ── REVIEW ITEM ── */
+.review-item { background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; transition: border-color .15s; }
+.review-item:hover { border-color: var(--c-border2); }
+.review-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 9px; }
+.review-reason { font-size: 12px; line-height: 1.6; color: var(--c-muted2); background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 5px; padding: 9px 11px; margin-bottom: 10px; word-break: break-word; white-space: normal; }
+.review-actions { display: flex; gap: 8px; }
+
+/* ── DRIFT ── */
+.drift-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 16px; }
+.drift-stat { background: var(--c-card); border: 1px solid var(--c-border); border-radius: var(--r); padding: 14px; text-align: center; }
+.drift-stat-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--c-muted); margin-bottom: 5px; }
+.drift-stat-val { font-family: var(--f-code); font-size: 22px; font-weight: 700; }
+.rec { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 5px; font-family: var(--f-code); font-size: 11px; font-weight: 700; margin-bottom: 16px; }
+.rec.stable { background: var(--c-green-bg); color: var(--c-green); border: 1px solid var(--c-green-bd); }
+.rec.monitor { background: var(--c-yellow-bg); color: var(--c-yellow); border: 1px solid var(--c-yellow-bd); }
+.rec.retrain { background: var(--c-red-bg); color: var(--c-red); border: 1px solid var(--c-red-bd); }
+
+/* ── LOADING / EMPTY ── */
+.loading { display: flex; align-items: center; gap: 9px; color: var(--c-muted); font-size: 12px; padding: 18px 0; }
+.spin { width: 13px; height: 13px; border: 2px solid var(--c-border); border-top-color: var(--c-green); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty { text-align: center; padding: 40px 16px; color: var(--c-muted); }
+.empty-icon { font-size: 24px; opacity: .3; margin-bottom: 8px; }
+
+/* ── TOAST ── */
+#toasts { position: fixed; top: 14px; right: 14px; z-index: 9999; display: flex; flex-direction: column; gap: 7px; }
+.toast {
+  background: var(--c-card);
+  border: 1px solid var(--c-border2);
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 11px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  animation: slide-in .18s ease;
+}
+.toast.ok { border-color: var(--c-green-bd); }
+.toast.err { border-color: var(--c-red-bd); color: var(--c-red); }
+@keyframes slide-in { from { opacity:0; transform: translateX(10px); } to { opacity:1; transform: translateX(0); } }
+
+/* ── VERSION ROW ── */
+.ver-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--c-border); }
+.ver-row:last-child { border-bottom: none; }
+.ver-tag { font-family: var(--f-code); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 4px; }
+.ver-tag.active { background: var(--c-green-bg); color: var(--c-green); border: 1px solid var(--c-green-bd); }
+.ver-meta { flex: 1; }
+.ver-name { font-size: 12px; color: var(--c-text); margin-bottom: 1px; }
+.ver-date { font-size: 10px; color: var(--c-muted); }
+.ver-metrics { display: flex; gap: 12px; }
+.vm { font-family: var(--f-code); font-size: 10px; color: var(--c-muted); }
+.vm b { color: var(--c-green); }
+</style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<div class="shell">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">Fraud<b>Shield</b></div>
+      <div class="logo-sub">Detection Engine v2</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Core</div>
+      <button type="button" class="nav-btn on" data-view="v-dashboard">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button type="button" class="nav-btn" data-view="v-predict">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M6 8l2 2 4-4"/></svg>
+        Score Transaction
+      </button>
+      <button type="button" class="nav-btn" data-view="v-explanations">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+        Explanations
+      </button>
+      <div class="nav-section">Operations</div>
+      <button type="button" class="nav-btn" data-view="v-review">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Review Queue
+        <span class="nav-badge" id="nav-badge-review">—</span>
+      </button>
+      <button type="button" class="nav-btn" data-view="v-drift">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="1,12 5,6 9,10 13,3"/></svg>
+        Drift Monitor
+      </button>
+      <button type="button" class="nav-btn" data-view="v-versions">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="4" r="2"/><circle cx="3" cy="12" r="2"/><circle cx="13" cy="12" r="2"/><path d="M8 6v2M6.3 10.5l-2 1M9.7 10.5l2 1"/></svg>
+        Model Registry
+      </button>
+    </div>
+    <div class="sidebar-foot">
+      <div class="conn-row">
+        <div class="conn-dot" id="conn-dot"></div>
+        <div>
+          <div class="conn-label" id="conn-label">Connecting...</div>
+          <div class="conn-url">localhost:8000</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ══ CONTENT ══ -->
+  <div class="content">
+    <div class="topbar">
+      <div class="topbar-path">FraudShield / <b id="topbar-title">Dashboard</b></div>
+      <div class="topbar-right">
+        <span class="chip chip-api">REST API</span>
+        <span class="chip chip-live">Live</span>
+        <button type="button" class="btn-sm" id="btn-refresh">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="scroll-body" id="scroll-body">
+
+      <!-- ════ DASHBOARD ════ -->
+      <div class="view show" id="v-dashboard">
+        <div class="ph">
+          <div class="ph-title">System <span>Overview</span></div>
+          <div class="ph-sub">Real-time fraud detection metrics — auto-refreshes every 30s</div>
+        </div>
+        <div class="ticker">
+          <div class="ticker-dot"></div>
+          <span>Live — polling /metrics &amp; /health</span>
+          <span class="ticker-right" id="dash-time">—</span>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-box b"><div class="stat-lbl">Total Transactions</div><div class="stat-num" id="s-total">—</div><div class="stat-sub">All time</div></div>
+          <div class="stat-box g"><div class="stat-lbl">Approved</div><div class="stat-num" id="s-approved">—</div><div class="stat-sub" id="s-approval-rate">—</div></div>
+          <div class="stat-box r"><div class="stat-lbl">Rejected</div><div class="stat-num" id="s-rejected">—</div><div class="stat-sub" id="s-fraud-rate">—</div></div>
+          <div class="stat-box y"><div class="stat-lbl">Under Review</div><div class="stat-num" id="s-review">—</div><div class="stat-sub" id="s-review-rate">—</div></div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">Decision Distribution</span></div>
+            <div class="panel-body" id="dist-chart">
+              <div class="loading"><div class="spin"></div> Loading...</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><span class="panel-title">System Health</span></div>
+            <div class="panel-body">
+              <div class="h-row"><span class="k">API Status</span><span class="v" id="h-api">—</span></div>
+              <div class="h-row"><span class="k">Avg Fraud Probability</span><span class="v" style="color:var(--c-yellow)" id="h-prob">—</span></div>
+              <div class="h-row"><span class="k">Active Model</span><span class="v" style="color:var(--c-blue)">v1 — XGBoost</span></div>
+              <div class="h-row"><span class="k">SHAP Explainer</span><span class="v" style="color:var(--c-green)">TreeExplainer</span></div>
+              <div class="h-row"><span class="k">LLM Layer</span><span class="v" style="color:var(--c-green)">Gemini Flash + Fallback</span></div>
+              <div class="h-row"><span class="k">Approve Threshold</span><span class="v">prob &lt; 0.30</span></div>
+              <div class="h-row"><span class="k">Reject Threshold</span><span class="v">prob ≥ 0.70</span></div>
+              <div class="h-row"><span class="k">Cost: False Negative</span><span class="v" style="color:var(--c-red)">₹500 fraud loss</span></div>
+              <div class="h-row"><span class="k">Cost: False Positive</span><span class="v" style="color:var(--c-yellow)">₹10 friction</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ PREDICT ════ -->
+      <!-- NOTE: There is NO <form> element here. -->
+      <!-- All buttons are type="button". This makes page reload impossible. -->
+      <div class="view" id="v-predict">
+        <div class="ph">
+          <div class="ph-title">Score <span>Transaction</span></div>
+          <div class="ph-sub">Submit features → XGBoost scores → SHAP attributes → LLM explains</div>
+        </div>
+        <div class="ep-row">
+          <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">localhost:8000<b>/predict</b></span></div>
+        </div>
+
+        <div class="predict-layout">
+
+          <!-- INPUT PANEL -->
+          <div class="panel" style="margin-bottom:0">
+            <div class="panel-head">
+              <span class="panel-title">Transaction Features</span>
+              <div class="btn-row">
+                <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px" id="btn-fill-legit">↳ Legit</button>
+                <button type="button" class="btn btn-red-outline" style="padding:4px 10px;font-size:9px" id="btn-fill-fraud">↳ Fraud</button>
+                <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px" id="btn-clear-form">✕</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="input-section-title">Core Features</div>
+              <div class="core-fields">
+                <div class="fld"><label>Time</label><input id="f-time" type="number" placeholder="1000.0"></div>
+                <div class="fld"><label>Amount (₹)</label><input id="f-amount" type="number" placeholder="149.62"></div>
+              </div>
+              <div class="input-section-title">PCA Features — V1 through V28</div>
+              <div class="v-fields" id="v-fields"></div>
+              <div class="btn-row">
+                <button type="button" class="btn btn-green" id="btn-score">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>
+                  Score Transaction
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESULT PANEL -->
+          <div id="result-area">
+            <div class="result-placeholder">
+              <div>
+                <div style="font-size:22px;opacity:.2;margin-bottom:8px;">◎</div>
+                <div>Results appear here after scoring</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ════ EXPLANATIONS ════ -->
+      <div class="view" id="v-explanations">
+        <div class="ph">
+          <div class="ph-title">Transaction <span>Explanations</span></div>
+          <div class="ph-sub">Gemini-generated reasoning grounded in SHAP feature attributions — full text</div>
+        </div>
+        <div class="ep-row">
+          <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">localhost:8000<b>/explanations</b></span></div>
+          <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">localhost:8000<b>/explanation/{id}</b></span></div>
+        </div>
+        <div class="panel" style="margin-bottom:12px">
+          <div class="panel-body" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
+            <span style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--c-muted)">Filter:</span>
+            <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px" data-filter="">All</button>
+            <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px;color:var(--c-red)" data-filter="REJECT">Rejected</button>
+            <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px;color:var(--c-yellow)" data-filter="REVIEW">Review</button>
+            <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:9px;color:var(--c-green)" data-filter="APPROVE">Approved</button>
+            <div style="margin-left:auto;display:flex;gap:7px;align-items:center">
+              <input id="lookup-id" type="text" placeholder="Lookup by transaction ID..." style="background:var(--c-bg);border:1px solid var(--c-border);border-radius:5px;padding:5px 9px;color:var(--c-text);font-family:var(--f-code);font-size:10px;outline:none;width:230px">
+              <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:9px" id="btn-lookup">Fetch →</button>
+            </div>
+          </div>
+        </div>
+        <div id="expl-list"><div class="loading"><div class="spin"></div> Loading...</div></div>
+      </div>
+
+      <!-- ════ REVIEW ════ -->
+      <div class="view" id="v-review">
+        <div class="ph">
+          <div class="ph-title">Human <span>Review Queue</span></div>
+          <div class="ph-sub">HITL — ambiguous transactions (prob 0.3–0.7) routed for analyst decision</div>
+        </div>
+        <div class="ep-row">
+          <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">localhost:8000<b>/review</b></span></div>
+          <div class="ep"><span class="ep-method post">POST</span><span class="ep-path">localhost:8000<b>/review/{id}</b></span></div>
+        </div>
+        <div id="review-list"><div class="loading"><div class="spin"></div> Loading...</div></div>
+      </div>
+
+      <!-- ════ DRIFT ════ -->
+      <div class="view" id="v-drift">
+        <div class="ph">
+          <div class="ph-title">Distribution <span>Drift Monitor</span></div>
+          <div class="ph-sub">Kolmogorov-Smirnov test comparing live data against training baseline — p &lt; 0.05 = drift</div>
+        </div>
+        <div class="ep-row">
+          <div class="ep"><span class="ep-method get">GET</span><span class="ep-path">localhost:8000<b>/drift</b></span></div>
+        </div>
+        <div id="drift-content"><div class="loading"><div class="spin"></div> Loading...</div></div>
+      </div>
+
+      <!-- ════ VERSIONS ════ -->
+      <div class="view" id="v-versions">
+        <div class="ph">
+          <div class="ph-title">Model <span>Registry</span></div>
+          <div class="ph-sub">Version history, evaluation metrics, rollback control</div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Registered Models</span></div>
+          <div class="panel-body" id="versions-body"><div class="loading"><div class="spin"></div> Loading...</div></div>
+        </div>
+        <div class="three-col">
+          <div class="panel" style="margin-bottom:0"><div class="panel-head"><span class="panel-title">Algorithm</span></div><div class="panel-body"><div style="font-size:13px;font-weight:700;margin-bottom:4px">XGBoost</div><div style="font-size:11px;color:var(--c-muted);line-height:1.6">scale_pos_weight · aucpr · 200 trees · depth 6</div></div></div>
+          <div class="panel" style="margin-bottom:0"><div class="panel-head"><span class="panel-title">Explainability</span></div><div class="panel-body"><div style="font-size:13px;font-weight:700;margin-bottom:4px">SHAP + Gemini</div><div style="font-size:11px;color:var(--c-muted);line-height:1.6">TreeExplainer · LLM async background · fallback to rule-based</div></div></div>
+          <div class="panel" style="margin-bottom:0"><div class="panel-head"><span class="panel-title">Cost Matrix</span></div><div class="panel-body"><div style="font-size:13px;font-weight:700;margin-bottom:4px">FN=₹500 / FP=₹10</div><div style="font-size:11px;color:var(--c-muted);line-height:1.6">50:1 asymmetry drives threshold placement</div></div></div>
+        </div>
+      </div>
+
+    </div><!-- /scroll-body -->
+  </div><!-- /content -->
+</div><!-- /shell -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   FRAUDSHIELD DASHBOARD — CLEAN ARCHITECTURE
+   - No <form> tags anywhere in the HTML
+   - All buttons are type="button"
+   - Navigation is handled by data-view attributes + JS
+   - submitPredict() is called via addEventListener, not onclick
+   - No possible page reload or navigation on score
+═══════════════════════════════════════════════════════════════════ */
+
+const API = 'http://localhost:8000';
+let currentView = 'v-dashboard';
+let lastTxId    = null;
+
+/* ── API ── */
+async function get(path) {
+  try {
+    const r = await fetch(API + path);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  } catch(e) { console.warn('GET', path, e.message); return null; }
+}
+
+async function post(path, body) {
+  try {
+    const r = await fetch(API + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  } catch(e) { console.warn('POST', path, e.message); return null; }
+}
+
+/* ── TOAST ── */
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span style="color:${type==='ok'?'var(--c-green)':'var(--c-red)'}">${type==='ok'?'✓':'✗'}</span> ${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* ── NAVIGATION ── */
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('show'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById(id).classList.add('show');
+  document.querySelector(`[data-view="${id}"]`).classList.add('on');
+  const titles = { 'v-dashboard':'Dashboard', 'v-predict':'Score Transaction', 'v-explanations':'Explanations', 'v-review':'Review Queue', 'v-drift':'Drift Monitor', 'v-versions':'Model Registry' };
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+  document.getElementById('scroll-body').scrollTop = 0;
+  currentView = id;
+  if (id === 'v-dashboard')    loadDashboard();
+  if (id === 'v-review')       loadReview();
+  if (id === 'v-drift')        loadDrift();
+  if (id === 'v-versions')     loadVersions();
+  if (id === 'v-explanations') loadExplanations('');
+}
+
+/* Attach nav buttons */
+document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => showView(btn.dataset.view));
+});
+
+document.getElementById('btn-refresh').addEventListener('click', () => showView(currentView));
+
+/* ── CONNECTIVITY ── */
+async function checkConn() {
+  const data = await get('/health');
+  const dot  = document.getElementById('conn-dot');
+  const lbl  = document.getElementById('conn-label');
+  if (data) {
+    dot.classList.remove('off');
+    lbl.textContent = 'API Connected';
+  } else {
+    dot.classList.add('off');
+    lbl.textContent = 'Offline';
+  }
+}
+
+/* ── DASHBOARD ── */
+async function loadDashboard() {
+  document.getElementById('dash-time').textContent = new Date().toLocaleTimeString();
+  const [m, h] = await Promise.all([get('/metrics'), get('/health')]);
+
+  const hel = document.getElementById('h-api');
+  if (h) { hel.textContent = '● Online'; hel.style.color = 'var(--c-green)'; }
+  else   { hel.textContent = '● Offline'; hel.style.color = 'var(--c-red)'; }
+
+  if (!m) return;
+
+  document.getElementById('s-total').textContent       = m.total_transactions.toLocaleString();
+  document.getElementById('s-approved').textContent    = m.approved.toLocaleString();
+  document.getElementById('s-rejected').textContent    = m.rejected.toLocaleString();
+  document.getElementById('s-review').textContent      = m.under_review.toLocaleString();
+  document.getElementById('s-approval-rate').textContent = m.approval_rate_percent.toFixed(1) + '% approval rate';
+  document.getElementById('s-fraud-rate').textContent    = m.fraud_rate_percent.toFixed(2)    + '% fraud rate';
+  document.getElementById('s-review-rate').textContent   = m.review_rate_percent.toFixed(1)   + '% review rate';
+  document.getElementById('h-prob').textContent          = m.avg_fraud_probability.toFixed(4);
+
+  const nb = document.getElementById('nav-badge-review');
+  nb.textContent = m.under_review;
+  nb.style.display = m.under_review > 0 ? '' : 'none';
+
+  const total = m.total_transactions || 1;
+  const bars  = [
+    { l:'Approved', v:m.approved,     p:(m.approved/total*100),     c:'var(--c-green)' },
+    { l:'Review',   v:m.under_review, p:(m.under_review/total*100), c:'var(--c-yellow)' },
+    { l:'Rejected', v:m.rejected,     p:(m.rejected/total*100),     c:'var(--c-red)' },
+  ];
+  document.getElementById('dist-chart').innerHTML = bars.map(b => `
+    <div class="dist-item">
+      <div class="dist-top">
+        <span>${b.l}</span>
+        <span>${b.v.toLocaleString()} (${b.p.toFixed(1)}%)</span>
+      </div>
+      <div class="dist-track"><div class="dist-fill" style="width:${Math.min(b.p,100).toFixed(1)}%;background:${b.c}"></div></div>
+    </div>`).join('');
+}
+
+/* ── BUILD V FIELDS ── */
+function buildVFields() {
+  const g = document.getElementById('v-fields');
+  g.innerHTML = '';
+  for (let i = 1; i <= 28; i++) {
+    g.innerHTML += `<div class="fld"><label>V${i}</label><input id="v${i}" type="number" step="0.0001" placeholder="0.0" style="font-size:10px;padding:5px 6px"></div>`;
+  }
+}
+
+function getFormValues() {
+  const b = {
+    Time:   parseFloat(document.getElementById('f-time').value)   || 0,
+    Amount: parseFloat(document.getElementById('f-amount').value) || 0,
+  };
+  for (let i = 1; i <= 28; i++) b['V'+i] = parseFloat(document.getElementById('v'+i).value) || 0;
+  return b;
+}
+
+/* ── FILL BUTTONS ── */
+document.getElementById('btn-fill-legit').addEventListener('click', () => {
+  document.getElementById('f-time').value   = (Math.random()*100000).toFixed(0);
+  document.getElementById('f-amount').value = (Math.random()*200+5).toFixed(2);
+  for (let i=1;i<=28;i++) document.getElementById('v'+i).value = (Math.random()*.6-.3).toFixed(4);
+  toast('Legitimate sample loaded');
+});
+
+document.getElementById('btn-fill-fraud').addEventListener('click', () => {
+  document.getElementById('f-time').value   = 86400;
+  document.getElementById('f-amount').value = 4999.99;
+  const fv = {1:-3.0,2:3.0,3:-5.0,4:4.0,5:-2.0,6:-1.0,7:-5.0,8:0.5,9:-3.0,10:-5.0,11:4.0,12:-8.0,13:0.5,14:-10.0,15:0.2,16:-4.0,17:-8.0,18:-3.0,19:0.5,20:0.5,21:0.8,22:0.3,23:-0.2,24:0.2,25:0.5,26:0.3,27:0.5,28:0.2};
+  for (let i=1;i<=28;i++) document.getElementById('v'+i).value = ((fv[i]||0)+(Math.random()*.3-.15)).toFixed(4);
+  toast('Fraud sample loaded', 'err');
+});
+
+document.getElementById('btn-clear-form').addEventListener('click', () => {
+  document.getElementById('f-time').value = '';
+  document.getElementById('f-amount').value = '';
+  for (let i=1;i<=28;i++) document.getElementById('v'+i).value = '';
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-placeholder">
+      <div><div style="font-size:22px;opacity:.2;margin-bottom:8px;">◎</div><div>Results appear here after scoring</div></div>
+    </div>`;
+  lastTxId = null;
+});
+
+/* ── SCORE TRANSACTION ── */
+/* This uses addEventListener — completely decoupled from any form */
+document.getElementById('btn-score').addEventListener('click', async function() {
+  const btn  = document.getElementById('btn-score');
+  const body = getFormValues();
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin" style="border-top-color:#0f0f13;border-color:rgba(15,15,19,.3);width:11px;height:11px;border-width:2px"></div> Scoring...';
+
+  const data = await post('/predict', body);
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Score Transaction';
+
+  if (!data) { toast('API error — is the server running?', 'err'); return; }
+
+  lastTxId = data.transaction_id;
+  toast(`${data.decision} — ${(data.probability*100).toFixed(2)}% fraud`);
+  renderResult(data);
+
+  /* Auto-poll explanation after 3 seconds */
+  setTimeout(() => pollExplanation(data.transaction_id), 3000);
+});
+
+/* ── RENDER RESULT ── */
+function renderResult(d) {
+  const area   = document.getElementById('result-area');
+  const dc     = { APPROVE:'bg', REVIEW:'by', REJECT:'br' };
+  const rc     = { LOW:'bg', MEDIUM:'by', HIGH:'br' };
+  const pColor = d.probability > .7 ? 'var(--c-red)' : d.probability > .3 ? 'var(--c-yellow)' : 'var(--c-green)';
+  const ca     = d.cost_analysis || {};
+  const shap   = d.shap_features || {};
+  const maxAbs = Math.max(...Object.values(shap).map(Math.abs), .0001);
+  const note   = d.probability < .3 ? 'Below approve threshold — auto-approved' : d.probability < .7 ? 'Between thresholds — routed to human review' : 'Above reject threshold — auto-rejected';
+
+  const shapHTML = Object.entries(shap).map(([k,v]) => `
+    <div class="shap-item">
+      <div class="shap-name">${k}</div>
+      <div class="shap-bar-wrap"><div class="shap-bar" style="width:${(Math.abs(v)/maxAbs*100).toFixed(1)}%;background:${v>0?'#f05070':'#22d3a0'}"></div></div>
+      <div class="shap-val-text" style="color:${v>0?'#f05070':'#22d3a0'}">${v>0?'+':''}${v.toFixed(4)}</div>
+    </div>`).join('');
+
+  area.innerHTML = `
+  <div class="result-card">
+    <div class="result-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${dc[d.decision]||''}">${d.decision}</span>
+        <span class="badge ${rc[d.risk_level]||''}">${d.risk_level} RISK</span>
+        <span style="font-family:var(--f-code);font-size:9px;color:var(--c-muted);margin-left:4px">${d.model_version||'v1'}</span>
+      </div>
+      <div style="font-family:var(--f-code);font-size:9px;color:var(--c-muted)">${d.transaction_id.slice(0,20)}…</div>
+    </div>
+    <div class="result-body">
+      <div>
+        <div class="result-label">Fraud Probability</div>
+        <div class="prob-big" style="color:${pColor}">${(d.probability*100).toFixed(2)}%</div>
+        <div style="font-size:10px;color:var(--c-muted);margin-top:5px">${note}</div>
+        <div class="cost-grid">
+          <div class="cost-box"><div class="cost-lbl">Transaction Amount</div><div class="cost-val" style="color:var(--c-blue)">₹${(ca.transaction_amount||0).toFixed(2)}</div></div>
+          <div class="cost-box"><div class="cost-lbl">Dominant Risk</div><div class="cost-val" style="color:${ca.dominant_risk==='FRAUD'?'var(--c-red)':'var(--c-yellow)'};font-size:14px">${ca.dominant_risk||'—'}</div></div>
+          <div class="cost-box">
+            <div class="cost-lbl">Expected Fraud Loss</div>
+            <div class="cost-val" style="color:var(--c-red)">₹${(ca.expected_fraud_loss||0).toFixed(2)}</div>
+            <div style="font-size:9px;color:var(--c-muted);margin-top:2px">P(fraud) × max(₹${(ca.transaction_amount||0).toFixed(0)}, ₹500)</div>
+          </div>
+          <div class="cost-box">
+            <div class="cost-lbl">Expected Friction Cost</div>
+            <div class="cost-val" style="color:var(--c-yellow)">₹${(ca.expected_friction_cost||0).toFixed(2)}</div>
+            <div style="font-size:9px;color:var(--c-muted);margin-top:2px">P(legit) × ₹10</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="result-label">SHAP Attribution</div>
+        <div style="font-size:9px;color:var(--c-muted);margin-bottom:8px">
+          <span style="color:#22d3a0">■</span> toward legit &nbsp;
+          <span style="color:#f05070">■</span> toward fraud
+        </div>
+        <div class="shap-list">${shapHTML}</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <div class="ai-block" id="ai-expl">
+        <div class="ai-label">AI Explanation</div>
+        <div style="display:flex;align-items:center;gap:7px;color:var(--c-muted);font-size:11px">
+          <div class="spin"></div> Generating explanation in background...
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:9px" id="btn-poll-expl">↻ Poll Explanation</button>
+      </div>
+    </div>
+  </div>`;
+
+  /* Attach poll button listener */
+  document.getElementById('btn-poll-expl').addEventListener('click', () => pollExplanation(d.transaction_id));
+}
+
+async function pollExplanation(txId) {
+  const box  = document.getElementById('ai-expl');
+  if (!box) return;
+  const data = await get('/explanation/' + txId);
+  if (!data) return;
+  if (data.explanation_ready && data.explanation) {
+    box.innerHTML = `<div class="ai-label">AI Explanation</div>${data.explanation}`;
+    toast('Explanation ready');
+  } else {
+    box.innerHTML = `<div class="ai-label">AI Explanation</div>
+      <div style="display:flex;align-items:center;gap:7px;color:var(--c-muted);font-size:11px"><div class="spin"></div> Still generating — click Poll again</div>`;
+  }
+}
+
+/* ── EXPLANATIONS ── */
+async function loadExplanations(filter) {
+  const el   = document.getElementById('expl-list');
+  el.innerHTML = '<div class="loading"><div class="spin"></div> Loading...</div>';
+  const url  = filter ? `/explanations?decision_filter=${filter}&limit=50` : '/explanations?limit=50';
+  const data = await get(url);
+
+  if (!data || !data.transactions) { el.innerHTML = '<div class="empty"><div class="empty-icon">◌</div><div>Could not load</div></div>'; return; }
+  if (!data.transactions.length)   { el.innerHTML = '<div class="empty"><div class="empty-icon">◌</div><div>No transactions yet</div></div>'; return; }
+
+  const dc = { APPROVE:'bg', REVIEW:'by', REJECT:'br' };
+  el.innerHTML = `
+    <div style="font-size:10px;color:var(--c-muted);margin-bottom:10px">Showing ${data.transactions.length} transactions</div>
+    <div class="panel">
+      <div class="panel-body-flush">
+        <table class="tbl">
+          <thead><tr><th>ID</th><th>Decision</th><th>Probability</th><th>Explanation</th><th>Time</th></tr></thead>
+          <tbody>
+            ${data.transactions.map(t => {
+              const pc = t.probability>.7?'var(--c-red)':t.probability>.3?'var(--c-yellow)':'var(--c-green)';
+              return `<tr>
+                <td class="tx-mono" style="max-width:160px;word-break:break-all;white-space:normal;font-size:9px">${t.transaction_id}</td>
+                <td><span class="badge ${dc[t.decision]||''}">${t.decision}</span></td>
+                <td>
+                  <div class="prob-inline">
+                    <div class="prob-track"><div class="prob-bar-fill" style="width:${(t.probability*100).toFixed(0)}%;height:100%;border-radius:2px;background:${pc}"></div></div>
+                    <span style="font-family:var(--f-code);font-size:10px;color:${pc}">${(t.probability*100).toFixed(1)}%</span>
+                  </div>
+                </td>
+                <td>${t.explanation_ready
+                  ? `<span class="expl-cell">${t.explanation||''}</span>`
+                  : `<span style="font-size:10px;color:var(--c-muted);display:flex;align-items:center;gap:5px"><span class="spin" style="width:10px;height:10px"></span>Generating...</span>`
+                }</td>
+                <td style="font-family:var(--f-code);font-size:9px;color:var(--c-muted);white-space:nowrap">${new Date(t.timestamp).toLocaleTimeString()}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* Filter buttons on explanations page */
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => loadExplanations(btn.dataset.filter));
+});
+
+async function lookupTx() {
+  const txId = document.getElementById('lookup-id').value.trim();
+  if (!txId) return;
+  const el   = document.getElementById('expl-list');
+  el.innerHTML = '<div class="loading"><div class="spin"></div> Fetching...</div>';
+  const data = await get('/explanation/' + txId);
+  if (!data) { el.innerHTML = '<div class="empty"><div>Transaction not found</div></div>'; return; }
+  const dc = { APPROVE:'bg', REVIEW:'by', REJECT:'br' };
+  const rc = { LOW:'bg', MEDIUM:'by', HIGH:'br' };
+  const pc = data.probability>.7?'var(--c-red)':data.probability>.3?'var(--c-yellow)':'var(--c-green)';
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Transaction Detail</span>
+        <div style="display:flex;gap:6px">
+          <span class="badge ${dc[data.decision]||''}">${data.decision}</span>
+          <span class="badge ${rc[data.risk_level]||''}">${data.risk_level||'—'}</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="three-col" style="margin-bottom:14px">
+          <div><div class="result-label">Probability</div><div style="font-family:var(--f-code);font-size:24px;font-weight:700;color:${pc}">${(data.probability*100).toFixed(2)}%</div></div>
+          <div><div class="result-label">Model</div><div style="font-family:var(--f-code);font-size:12px;color:var(--c-blue);margin-top:4px">${data.model_version||'—'}</div></div>
+          <div><div class="result-label">Timestamp</div><div style="font-size:11px;color:var(--c-muted2);margin-top:4px">${data.timestamp?new Date(data.timestamp).toLocaleString():'—'}</div></div>
+        </div>
+        <div class="ai-block">
+          <div class="ai-label">AI Explanation</div>
+          ${data.explanation_ready?data.explanation:'<span style="color:var(--c-muted)">Still generating — try again in a moment</span>'}
+        </div>
+        <div style="margin-top:10px">
+          <button type="button" class="btn btn-outline" style="padding:5px 10px;font-size:9px" id="btn-back-expl">← Back to list</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('btn-back-expl').addEventListener('click', () => loadExplanations(''));
+}
+document.getElementById('btn-lookup').addEventListener('click', lookupTx);
+
+/* ── REVIEW ── */
+async function loadReview() {
+  const el   = document.getElementById('review-list');
+  el.innerHTML = '<div class="loading"><div class="spin"></div> Loading queue...</div>';
+  const data = await get('/review');
+  if (!data) { el.innerHTML = '<div class="empty"><div>API unreachable</div></div>'; return; }
+
+  const nb = document.getElementById('nav-badge-review');
+  nb.textContent = data.count || 0;
+  nb.style.display = data.count > 0 ? '' : 'none';
+
+  if (!data.pending_reviews?.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div>Queue is clear — no pending reviews</div></div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="font-size:10px;color:var(--c-muted);margin-bottom:12px">${data.count} transaction${data.count!==1?'s':''} awaiting analyst decision</div>
+    ${data.pending_reviews.map(r => `
+      <div class="review-item" id="ri-${r.transaction_id}">
+        <div class="review-top">
+          <div>
+            <div style="font-family:var(--f-code);font-size:10px;color:var(--c-blue);margin-bottom:2px">${r.transaction_id}</div>
+            <div style="font-size:10px;color:var(--c-muted)">Queued: ${r.queued_at?new Date(r.queued_at).toLocaleString():'—'}</div>
+          </div>
+          <span class="badge by">Pending Review</span>
+        </div>
+        <div class="review-reason">${r.reason||'⟳ Explanation generating...'}</div>
+        <div class="review-actions">
+          <button type="button" class="btn btn-green-outline" style="padding:6px 12px;font-size:10px" data-tx="${r.transaction_id}" data-dec="APPROVED">✓ Approve</button>
+          <button type="button" class="btn btn-red-outline"   style="padding:6px 12px;font-size:10px" data-tx="${r.transaction_id}" data-dec="REJECTED">✗ Reject</button>
+        </div>
+      </div>`).join('')}`;
+
+  /* Attach review buttons */
+  document.querySelectorAll('[data-tx][data-dec]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const txId = btn.dataset.tx;
+      const dec  = btn.dataset.dec;
+      const card = document.getElementById('ri-' + txId);
+      if (card) { card.style.opacity='.5'; card.style.pointerEvents='none'; }
+      const result = await post(`/review/${txId}?human_decision=${dec}`, {});
+      if (result && card) {
+        const dc = { APPROVED:'bg', REJECTED:'br' };
+        card.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><span class="badge ${dc[dec]||''}">${dec}</span><span style="font-size:10px;color:var(--c-muted)">${txId.slice(0,20)}… resolved ${new Date().toLocaleTimeString()}</span></div>`;
+        card.style.opacity = '1';
+        toast(`Transaction ${dec.toLowerCase()}`, dec==='APPROVED'?'ok':'err');
+      } else {
+        if (card) { card.style.opacity='1'; card.style.pointerEvents='auto'; }
+        toast('Failed to submit decision', 'err');
+      }
+    });
+  });
+}
+
+/* ── DRIFT ── */
+async function loadDrift() {
+  const el   = document.getElementById('drift-content');
+  el.innerHTML = '<div class="loading"><div class="spin"></div> Running KS test...</div>';
+  const data = await get('/drift');
+  if (!data) { el.innerHTML = '<div class="empty"><div>API unreachable</div></div>'; return; }
+  if (data.message) {
+    el.innerHTML = `<div class="panel"><div class="panel-body" style="text-align:center;padding:36px 20px">
+      <div style="font-size:13px;color:var(--c-muted);margin-bottom:7px">${data.message}</div>
+      <div style="font-size:11px;color:var(--c-muted)">Generate at least ${data.minimum_required||30} transactions first</div>
+    </div></div>`;
+    return;
+  }
+
+  const rm = { STABLE:'stable', MONITOR:'monitor', RETRAIN:'retrain' };
+  const ri = { STABLE:'✓', MONITOR:'⚠', RETRAIN:'✗' };
+  const drifted = data.drifted_features || [];
+
+  el.innerHTML = `
+    <div class="drift-stats">
+      <div class="drift-stat"><div class="drift-stat-lbl">Features Checked</div><div class="drift-stat-val" style="color:var(--c-blue)">${data.total_features_checked}</div></div>
+      <div class="drift-stat"><div class="drift-stat-lbl">Drifted Features</div><div class="drift-stat-val" style="color:${drifted.length>0?'var(--c-red)':'var(--c-green)'}">${drifted.length}</div></div>
+      <div class="drift-stat"><div class="drift-stat-lbl">Drift Severity</div><div class="drift-stat-val" style="color:var(--c-yellow)">${data.drift_severity_percent}%</div></div>
+    </div>
+    <div class="rec ${rm[data.recommendation]||'stable'}">${ri[data.recommendation]||'✓'} ${data.recommendation}</div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">KS Test Results — Feature Level</span><span style="font-size:9px;color:var(--c-muted)">p &lt; 0.05 = drift detected</span></div>
+      <div class="panel-body-flush">
+        <table class="tbl">
+          <thead><tr><th>Feature</th><th>KS Statistic</th><th>p-value</th><th>Status</th></tr></thead>
+          <tbody>
+            ${Object.entries(data.details||{}).slice(0,30).map(([f,i])=>`<tr>
+              <td style="font-family:var(--f-code);font-size:10px">${f}</td>
+              <td style="font-family:var(--f-code);font-size:10px">${i.ks_statistic.toFixed(4)}</td>
+              <td style="font-family:var(--f-code);font-size:10px;color:${i.p_value<.05?'var(--c-red)':'var(--c-muted)'}">${i.p_value.toFixed(4)}</td>
+              <td>${i.drifted?'<span class="badge br" style="font-size:8px">Drifted</span>':'<span class="badge bg" style="font-size:8px">Stable</span>'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ── VERSIONS ── */
+async function loadVersions() {
+  const el = document.getElementById('versions-body');
+  const h  = await get('/health');
+  if (!h) { el.innerHTML = '<div style="color:var(--c-muted);font-size:12px;padding:8px 0">Could not connect to API.</div>'; return; }
+  el.innerHTML = `
+    <div class="ver-row">
+      <div class="ver-tag active">v1</div>
+      <div class="ver-meta">
+        <div class="ver-name">fraud_model.pkl — XGBoost Classifier</div>
+        <div class="ver-date">scale_pos_weight · eval_metric=aucpr · 200 estimators · max_depth=6</div>
+      </div>
+      <div class="ver-metrics">
+        <div class="vm">Precision <b>~0.88</b></div>
+        <div class="vm">Recall <b>~0.84</b></div>
+        <div class="vm">F1 <b>~0.86</b></div>
+        <div class="vm">AUC-ROC <b>~0.97</b></div>
+      </div>
+      <span class="badge bg" style="margin-left:8px">Active</span>
+    </div>
+    <div style="padding:10px 0;font-size:10px;color:var(--c-muted)">
+      Retrain: <span style="font-family:var(--f-code);color:var(--c-text)">python training/train.py</span>
+    </div>`;
+}
+
+/* ── INIT ── */
+buildVFields();
+checkConn();
+loadDashboard();
+setInterval(checkConn, 15000);
+setInterval(() => { if (currentView === 'v-dashboard') loadDashboard(); }, 30000);
+</script>
+</body>
+</html>
